@@ -8,7 +8,7 @@ headers = {
  'Accept-Language': 'en-US, en;q=0.5'
 }
 
-search_query = 'laptops'.replace(' ','+')
+search_query = 'phone'.replace(' ','+')
 base_url = f'https://www.amazon.com/s?k={search_query}'
 
 items = []
