@@ -1,55 +1,54 @@
-import requests                  #used for hitting the URL( pulling all the codes shown in inspect section of website)
-from bs4 import BeautifulSoup    # used for scrapping from website
-import pandas as pd              #to chop the datas as required
-from time import sleep           # to let the system know its not a robot ,so that there is interval and not continous
+import requests                  # Importing requests to send HTTP requests.
+from bs4 import BeautifulSoup    # BeautifulSoup for parsing HTML and XML documents.
+import pandas as pd              # Pandas for data manipulation and analysis.
+from time import sleep           # Sleep to pause the execution for a given amount of time.
 
+# Headers to mimic a browser visit and potentially avoid being blocked as a bot.
 headers = {
  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0',
  'Accept-Language': 'en-US, en;q=0.5'
 }
 
+# Search query setup and base URL formation for Amazon search.
 search_query = 'phone'.replace(' ','+')
 base_url = f'https://www.amazon.com/s?k={search_query}'
 
-items = []
-for i in range(1,5):
-    #print('processing{0}...'.format(base_url + '&page={0}'.format(i)))
-    #print(f'processing{i}...'+base_url+f'&page={i}')
-    print(f'processing{i}...{base_url}&page={i}')
-    response = requests.get(base_url + '&page = {0}'.format(i),headers = headers)
-    soup = BeautifulSoup(response.content,'html.parser')
+items = []  # List to store scraped data.
+
+# Looping through the first 4 pages of search results.
+for i in range(1, 5):
+    print(f'processing page {i}...{base_url}&page={i}')
+    # Sending HTTP GET request to each search result page.
+    response = requests.get(base_url + '&page={0}'.format(i), headers=headers)
+    soup = BeautifulSoup(response.content, 'html.parser')  # Parsing the page content.
     
-    results = soup.find_all('div',{'class':'s-result-item','data-component-type': 's-search-result'})
+    # Finding all product items on the page.
+    results = soup.find_all('div', {'class': 's-result-item', 'data-component-type': 's-search-result'})
     
+    # Iterating over each product item.
     for result in results:
-        product_name = result.h2.text
-        
+        product_name = result.h2.text  # Extracting product name.
+
         try:
-            rating = result.find('i',{'class':'a-icon'}).text
-            rating_count = result.find_all('span',{'aria-label':True})[1].text
+            # Extracting product rating and rating count.
+            rating = result.find('i', {'class': 'a-icon'}).text
+            rating_count = result.find_all('span', {'aria-label': True})[1].text
         except AttributeError:
-            continue
-        
+            continue  # Skip if rating or rating count not found.
+
         try:
-            price1 = result.find('span',{'class':'a-price-whole'}).text
-            price2 = result.find('span',{'class':'a-price-whole'}).text
-            price = price1+price2
+            # Extracting product price and URL.
+            price1 = result.find('span', {'class': 'a-price-whole'}).text
+            price2 = result.find('span', {'class': 'a-price-whole'}).text
+            price = price1 + price2
             product_url = 'https://amazon.com' + result.h2.a['href']
-            #print(rating_count, product_url)
-            items.append([product_name, rating, rating_count,price, product_url])
-        
+            items.append([product_name, rating, rating_count, price, product_url])  # Appending data to the list.
         except AttributeError:
-            continue
-    sleep(1.5)
-    
-    df =pd.DataFrame(items,columns=['prodcut','rating','rating count','price','product_url'])
-    print(df)
-    df.to_excel(f'{search_query}.xlsx')
-        
-            
-            
-            
-            
-            
-            
-            
+            continue  # Skip if price not found.
+
+    sleep(1.5)  # Pause execution to mimic human browsing and avoid being blocked.
+
+# Creating a DataFrame from the scraped data and exporting it to an Excel file.
+df = pd.DataFrame(items, columns=['product', 'rating', 'rating count', 'price', 'product_url'])
+print(df)
+df.to_excel(f'{search_query}.xlsx')
